@@ -7,36 +7,44 @@ import time
 start_time = time.time()
 
 def calculateMixedNormals():
-    images = []
 
-    names = ["X.jpg", "XN.jpg", "Y.jpg", "YN.jpg", "Z.jpg", "ZN.jpg"]
+    for card in range(1, 7):
 
-    for i in names:
-        img = Image.open(i)
-        arr = array(img)
-        images.append(arr.astype('float64'))
+        images = []
 
-    height, width, _ = images[0].shape
+        prefix = "./card" + str(card) + "/"
 
-    N_x = (images[0] - images[1]) / 255
-    N_y = (images[2] - images[3]) / 255
-    N_z = (images[4] - images[5]) / 255
+        names = ["1.jpg", "2.jpg", "3.jpg", "4.jpg", "5.jpg", "6.jpg"]
 
-    encodedImage = np.empty_like(N_x).astype('float64')
+        names = [prefix + name for name in names]
+        print names
 
-    encodedImage[..., 0] = N_x[..., 2]
-    encodedImage[..., 1] = N_y[..., 2]
-    encodedImage[..., 2] = N_z[..., 2]
+        for i in names:
+            img = Image.open(i)
+            arr = array(img)
+            images.append(arr.astype('float64'))
 
-    for h in range(height):
-        normalize(encodedImage[h], copy=False)
+        height, width, _ = images[0].shape
 
-    encodedImage = (encodedImage + 1.0) / 2.0
+        N_x = (images[0] - images[1]) / 255
+        N_y = (images[2] - images[3]) / 255
+        N_z = (images[4] - images[5]) / 255
 
-    encodedImage *= 255.0
+        encodedImage = np.empty_like(N_x).astype('float64')
 
-    im = Image.fromarray(encodedImage.astype('uint8'))
-    im.save("encodedImage4.jpg")
+        encodedImage[..., 0] = N_x[..., 2]
+        encodedImage[..., 1] = N_y[..., 2]
+        encodedImage[..., 2] = N_z[..., 2]
+
+        for h in range(height):
+            normalize(encodedImage[h], copy=False)
+
+        encodedImage = (encodedImage + 1.0) / 2.0
+
+        encodedImage *= 255.0
+
+        im = Image.fromarray(encodedImage.astype('uint8'))
+        im.save("encoded{}.jpg".format(card))
 
 
 
