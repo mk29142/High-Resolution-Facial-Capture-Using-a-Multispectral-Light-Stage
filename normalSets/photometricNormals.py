@@ -17,7 +17,6 @@ def calculateMixedNormals():
         names = ["1.jpg", "2.jpg", "3.jpg", "4.jpg", "5.jpg", "6.jpg"]
 
         names = [prefix + name for name in names]
-        print names
 
         for i in names:
             img = Image.open(i)
