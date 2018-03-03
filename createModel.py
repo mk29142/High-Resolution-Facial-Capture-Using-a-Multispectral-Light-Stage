@@ -14,14 +14,20 @@ for i in range(1,7):
     photos.append(path + "card{}.JPG".format(i))
 
 chunk.addPhotos(photos)
-chunk.optimizeCameras(adaptive_fitting=True)
 for frame in chunk.frames:
     frame.matchPhotos(accuracy=PhotoScan.HighAccuracy)
 chunk.alignCameras()
 
-chunk.buildDepthMaps(quality = PhotoScan.UltraQuality, filter = PhotoScan.AggressiveFiltering)
-chunk.buildDenseCloud()
-chunk.buildModel(surface = PhotoScan.Arbitrary, interpolation = PhotoScan.EnabledInterpolation, face_count = 1000000, source = PhotoScan.DataSource.DenseCloudData)
+for camera in doc.chunk.cameras:
+    if not camera.transform:
+        print(camera.label)
+        doc.chunk.alignCameras([camera])
+
+chunk.optimizeCameras(adaptive_fitting=True)
+
+# chunk.buildDepthMaps(quality = PhotoScan.UltraQuality, filter = PhotoScan.AggressiveFiltering)
+# chunk.buildDenseCloud()
+# chunk.buildModel(surface = PhotoScan.Arbitrary, interpolation = PhotoScan.EnabledInterpolation, face_count = 1000000, source = PhotoScan.DataSource.DenseCloudData)
 
 doc.save(path=path+"test.psz", chunks= [doc.chunk])
 
