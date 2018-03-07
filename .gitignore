@@ -1,2 +1,10 @@
 *.JPG
 *.zip
+*.mtl
+*.obj
+*.ply
+*.mlp
+list.txt
+*.out
+*.xml
+
