@@ -7,4 +7,5 @@
 list.txt
 *.out
 *.xml
-
+.vscode
+normalEnv
