@@ -38,8 +38,9 @@ def calculateMixedNormals():
         for h in range(height):
             normalize(encodedImage[h], copy=False)
 
-        encodedImage = (encodedImage + 1.0) / 2.0
 
+        # only for visualising
+        encodedImage = (encodedImage + 1.0) / 2.0
         encodedImage *= 255.0
 
         im = Image.fromarray(encodedImage.astype('uint8'))
