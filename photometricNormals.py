@@ -8,6 +8,8 @@ import xml.etree.ElementTree as ET
 
 start_time = time.time()
 
+NumberOfCameras = 0
+
 def calculateMixedNormals():
 
     for card in range(1, 7):
@@ -120,16 +122,58 @@ def calculateSpecularNormals():
     images = specularXImages + specularYImages + specularZImages
 
 
-def getViewPoints(path):
+def getTranslationVectorPerCamera(path):
     tree = ET.parse(path)
     root = tree.getroot()
-    photogroups = root.findall('Photogroups')
-    print(photogroups)
+    block = root.find('Block')
+    photoGroups = block.find('Photogroups').findall('Photogroup')
+    photos = map(lambda photogroup: photogroup.findall('Photo') , photoGroups)
+    photos = reduce(lambda x,y: x+y, photos)
 
+    NumberOfCameras = len(photos)
+
+    viewPoints = {}
+
+    for photo in photos:
+        imagePath = photo.find('ImagePath').text
+        name = imagePath.split('/')[-1].split('.')[0]
+
+        center = photo.find('Pose').find('Center')
+        
+        #may need to negate coord value for meshlab project
+        coords = map(lambda axis: float(axis.text), center)
+        viewPoints[name] = coords
+    
+    return viewPoints
+
+def getRotationMatrixPerCamera(path):
+    with open(path) as f:
+        f.readline()
+        f.readline()
+        f.readline()
+
+        rotationMatricPerCamera = {}
+
+        for i in range(1,11):
+            card = "card{}".format(i)
+
+            matrix = ""
+            for j in range(3):
+                matrix += f.readline()
+                matrix += "0 "
+            
+            f.readline()
+            f.readline()
+            matrix += "0 0 0 1"
+
+            rotationMatricPerCamera[card] = matrix
+        
+    return rotationMatricPerCamera
 
 if __name__ == "__main__":
     # calculateMixedNormals()
     # calculateDiffuseNormals()
     # calculateSpecularNormals()
-    getViewPoints('blocksExchangeForSpecular.xml')
+    # getTranslationVectorPerCamera('blocksExchangeForSpecular.xml')
+    getRotationMatrixPerCamera('bundler.out')
     print("--- %s seconds ---" % (time.time() - start_time))
