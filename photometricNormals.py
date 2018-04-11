@@ -216,9 +216,6 @@ def getFocalFromAgisoftXml(pathToAgisoftXML):
 
     return focalmmPerPhoto
 
-
-
-
 def getCameraParameters(pathToBlockExchangeXML, pathToAgisoftXML):
     tree = ET.parse(pathToBlockExchangeXML)
     root = tree.getroot()
@@ -226,14 +223,15 @@ def getCameraParameters(pathToBlockExchangeXML, pathToAgisoftXML):
     photoGroups = block.find('Photogroups').findall('Photogroup')
     counter = 1
 
-    photogroupToCard = {}
+    cardToPhotoGroup = {}
 
     for group in photoGroups:
         photos = group.findall('Photo')
         photos = map(getCameraName, photos)
-        photogroupToCard["photogoup{}".format(counter)] = photos
+        for photo in photos:
+            cardToPhotoGroup[photo] = "photogoup{}".format(counter)
         counter += 1
-    
+        
     counter = 1
 
     photogoupToCameraParameters = {}
@@ -256,9 +254,13 @@ def getCameraParameters(pathToBlockExchangeXML, pathToAgisoftXML):
     
     focalmmPerPhoto = getFocalFromAgisoftXml(pathToAgisoftXML)
 
-    # focal length will need agisoftXML
-        
-    print(focalmmPerPhoto)
+    cardParams = valmap(lambda photogroup: photogoupToCameraParameters[photogroup], cardToPhotoGroup)
+
+    for card in cardParams:
+        focalLength = focalmmPerPhoto[card]
+        cardParams[card]['FocalMm'] = focalLength
+
+    return cardParams
 
 if __name__ == "__main__":
     # calculateMixedNormals()
