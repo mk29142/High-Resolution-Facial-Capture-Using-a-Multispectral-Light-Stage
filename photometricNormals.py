@@ -5,6 +5,7 @@ from numpy import array
 from sklearn.preprocessing import normalize
 import time
 import xml.etree.ElementTree as ET
+from toolz.dicttoolz import valmap
 
 start_time = time.time()
 
@@ -185,14 +186,38 @@ def getRotationMatrixPerCamera(pathToBundlerOut):
             for j in range(3):
                 matrix += f.readline()
                 matrix += "0 "
-            
+
             f.readline()
             f.readline()
             matrix += "0 0 0 1"
 
             rotationMatricPerCamera[card] = matrix
-        
+
     return rotationMatricPerCamera
+
+def getFocalFromAgisoftXml(pathToAgisoftXML):
+    tree = ET.parse(pathToAgisoftXML)
+    root = tree.getroot()
+    cameras = root.find('chunk').find('cameras')
+
+    photoToCamera = {}
+
+    for camera in cameras:
+        photoToCamera[camera.get('label')] = camera.get('sensor_id')
+    
+    sensors = root.find('chunk').find('sensors')
+    sensorFocalLength = {}
+
+    for sensor in sensors:
+        sensorId = sensor.get('id')
+        sensorFocalLength[sensorId] = sensor.find('calibration').find('f').text
+
+    focalmmPerPhoto = valmap(lambda sensorId: sensorFocalLength[sensorId], photoToCamera)
+
+    return focalmmPerPhoto
+
+
+
 
 def getCameraParameters(pathToBlockExchangeXML, pathToAgisoftXML):
     tree = ET.parse(pathToBlockExchangeXML)
@@ -214,24 +239,26 @@ def getCameraParameters(pathToBlockExchangeXML, pathToAgisoftXML):
     photogoupToCameraParameters = {}
 
     for group in photoGroups:
-        obj = {}
+        params = {}
         imageDimensions = map(lambda dim: dim.text, list(group.find('ImageDimensions')))
         distortion = group.find('Distortion')
         distortions = "{} {}".format(distortion.find('K2').text, distortion.find('K3').text)
 
-        obj['ViewportPx'] = "{} {}".format(imageDimensions[0], imageDimensions[1])
-        obj['LensDistortion'] = distortions
-        obj['CenterPx'] = "{} {}".format(int(imageDimensions[0])/2 , int(imageDimensions[1])/2)
-        obj['CameraType'] = '0'
-        obj['PixelSizeMm'] = "1 1"
+        params['ViewportPx'] = "{} {}".format(imageDimensions[0], imageDimensions[1])
+        params['LensDistortion'] = distortions
+        params['CenterPx'] = "{} {}".format(int(imageDimensions[0])/2 , int(imageDimensions[1])/2)
+        params['CameraType'] = '0'
+        params['PixelSizeMm'] = "1 1"
 
-        photogoupToCameraParameters["photogoup{}".format(counter)] = obj
+        photogoupToCameraParameters["photogoup{}".format(counter)] = params
 
         counter += 1 
+    
+    focalmmPerPhoto = getFocalFromAgisoftXml(pathToAgisoftXML)
 
     # focal length will need agisoftXML
         
-    print(photogoupToCameraParameters)
+    print(focalmmPerPhoto)
 
 if __name__ == "__main__":
     # calculateMixedNormals()
@@ -240,4 +267,5 @@ if __name__ == "__main__":
     # getTranslationVectorPerCamera('blocksExchangeForSpecular.xml')
     # getRotationMatrixPerCamera('bundler.out')
     getCameraParameters('blocksExchangeForSpecular.xml', 'agisoftXML.xml')
+    # getFocalFromAgisoftXml('agisoftXML.xml')
     print("--- %s seconds ---" % (time.time() - start_time))
