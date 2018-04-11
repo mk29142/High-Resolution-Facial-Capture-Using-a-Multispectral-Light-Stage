@@ -121,9 +121,25 @@ def calculateSpecularNormals():
 
     images = specularXImages + specularYImages + specularZImages
 
+    height, width, _ = images[0].shape
 
-def getPhotoXMLBlock(path):
-    tree = ET.parse(path)
+    N_x = (images[0] - images[1]) / 255
+    N_y = (images[2] - images[3]) / 255
+    N_z = (images[4] - images[5]) / 255
+
+    encodedImage = np.empty_like(N_x).astype('float64')
+
+    encodedImage[..., 0] = N_x[..., 2]
+    encodedImage[..., 1] = N_y[..., 2]
+    encodedImage[..., 2] = N_z[..., 2]
+
+    for h in range(height):
+        normalize(encodedImage[h], copy=False)
+        
+        # now need to run addition with view vector and re-normalise 
+
+def getPhotoXMLBlock(pathToBlockExchangeXML):
+    tree = ET.parse(pathToBlockExchangeXML)
     root = tree.getroot()
     block = root.find('Block')
     photoGroups = block.find('Photogroups').findall('Photogroup')
@@ -136,8 +152,8 @@ def getCameraName(photoTag):
     name = imagePath.split('/')[-1].split('.')[0]
     return name
 
-def getTranslationVectorPerCamera(path):
-    photos = getPhotoXMLBlock(path)
+def getTranslationVectorPerCamera(pathToBlockExchangeXML):
+    photos = getPhotoXMLBlock(pathToBlockExchangeXML)
     NumberOfCameras = len(photos)
 
     vectorPerCamera = {}
@@ -154,8 +170,8 @@ def getTranslationVectorPerCamera(path):
 
     return vectorPerCamera
 
-def getRotationMatrixPerCamera(path):
-    with open(path) as f:
+def getRotationMatrixPerCamera(pathToBundlerOut):
+    with open(pathToBundlerOut) as f:
         f.readline()
         f.readline()
         f.readline()
@@ -195,15 +211,27 @@ def getCameraParameters(pathToBlockExchangeXML, pathToAgisoftXML):
     
     counter = 1
 
+    photogoupToCameraParameters = {}
+
     for group in photoGroups:
+        obj = {}
         imageDimensions = map(lambda dim: dim.text, list(group.find('ImageDimensions')))
         distortion = group.find('Distortion')
+        distortions = "{} {}".format(distortion.find('K2').text, distortion.find('K3').text)
 
-        print(focalLengthPixels)
+        obj['ViewportPx'] = "{} {}".format(imageDimensions[0], imageDimensions[1])
+        obj['LensDistortion'] = distortions
+        obj['CenterPx'] = "{} {}".format(int(imageDimensions[0])/2 , int(imageDimensions[1])/2)
+        obj['CameraType'] = '0'
+        obj['PixelSizeMm'] = "1 1"
+
+        photogoupToCameraParameters["photogoup{}".format(counter)] = obj
+
+        counter += 1 
 
     # focal length will need agisoftXML
         
-    # print(photogroupToCard)
+    print(photogoupToCameraParameters)
 
 if __name__ == "__main__":
     # calculateMixedNormals()
