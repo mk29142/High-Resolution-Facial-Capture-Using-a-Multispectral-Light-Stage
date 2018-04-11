@@ -137,7 +137,6 @@ def getCameraName(photoTag):
     return name
 
 def getTranslationVectorPerCamera(path):
-
     photos = getPhotoXMLBlock(path)
     NumberOfCameras = len(photos)
 
@@ -151,7 +150,8 @@ def getTranslationVectorPerCamera(path):
         #may need to negate coord value for meshlab project
         coords = map(lambda axis: float(axis.text), center)
         vectorPerCamera[name] = coords
-    
+        vectorPerCamera[name].append(1)
+
     return vectorPerCamera
 
 def getRotationMatrixPerCamera(path):
@@ -178,12 +178,38 @@ def getRotationMatrixPerCamera(path):
         
     return rotationMatricPerCamera
 
+def getCameraParameters(pathToBlockExchangeXML, pathToAgisoftXML):
+    tree = ET.parse(pathToBlockExchangeXML)
+    root = tree.getroot()
+    block = root.find('Block')
+    photoGroups = block.find('Photogroups').findall('Photogroup')
+    counter = 1
 
+    photogroupToCard = {}
+
+    for group in photoGroups:
+        photos = group.findall('Photo')
+        photos = map(getCameraName, photos)
+        photogroupToCard["photogoup{}".format(counter)] = photos
+        counter += 1
+    
+    counter = 1
+
+    for group in photoGroups:
+        imageDimensions = map(lambda dim: dim.text, list(group.find('ImageDimensions')))
+        distortion = group.find('Distortion')
+
+        print(focalLengthPixels)
+
+    # focal length will need agisoftXML
+        
+    # print(photogroupToCard)
 
 if __name__ == "__main__":
     # calculateMixedNormals()
     # calculateDiffuseNormals()
     # calculateSpecularNormals()
-    getTranslationVectorPerCamera('blocksExchangeForSpecular.xml')
-    getRotationMatrixPerCamera('bundler.out')
+    # getTranslationVectorPerCamera('blocksExchangeForSpecular.xml')
+    # getRotationMatrixPerCamera('bundler.out')
+    getCameraParameters('blocksExchangeForSpecular.xml', 'agisoftXML.xml')
     print("--- %s seconds ---" % (time.time() - start_time))
