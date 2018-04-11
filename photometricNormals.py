@@ -122,29 +122,37 @@ def calculateSpecularNormals():
     images = specularXImages + specularYImages + specularZImages
 
 
-def getTranslationVectorPerCamera(path):
+def getPhotoXMLBlock(path):
     tree = ET.parse(path)
     root = tree.getroot()
     block = root.find('Block')
     photoGroups = block.find('Photogroups').findall('Photogroup')
     photos = map(lambda photogroup: photogroup.findall('Photo') , photoGroups)
     photos = reduce(lambda x,y: x+y, photos)
+    return photos
 
+def getCameraName(photoTag):
+    imagePath = photoTag.find('ImagePath').text
+    name = imagePath.split('/')[-1].split('.')[0]
+    return name
+
+def getTranslationVectorPerCamera(path):
+
+    photos = getPhotoXMLBlock(path)
     NumberOfCameras = len(photos)
 
-    viewPoints = {}
+    vectorPerCamera = {}
 
     for photo in photos:
-        imagePath = photo.find('ImagePath').text
-        name = imagePath.split('/')[-1].split('.')[0]
+        name = getCameraName(photo)
 
         center = photo.find('Pose').find('Center')
         
         #may need to negate coord value for meshlab project
         coords = map(lambda axis: float(axis.text), center)
-        viewPoints[name] = coords
+        vectorPerCamera[name] = coords
     
-    return viewPoints
+    return vectorPerCamera
 
 def getRotationMatrixPerCamera(path):
     with open(path) as f:
@@ -154,7 +162,7 @@ def getRotationMatrixPerCamera(path):
 
         rotationMatricPerCamera = {}
 
-        for i in range(1,11):
+        for i in range(1,NumberOfCameras+1):
             card = "card{}".format(i)
 
             matrix = ""
@@ -170,10 +178,12 @@ def getRotationMatrixPerCamera(path):
         
     return rotationMatricPerCamera
 
+
+
 if __name__ == "__main__":
     # calculateMixedNormals()
     # calculateDiffuseNormals()
     # calculateSpecularNormals()
-    # getTranslationVectorPerCamera('blocksExchangeForSpecular.xml')
+    getTranslationVectorPerCamera('blocksExchangeForSpecular.xml')
     getRotationMatrixPerCamera('bundler.out')
     print("--- %s seconds ---" % (time.time() - start_time))
