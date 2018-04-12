@@ -11,6 +11,28 @@ start_time = time.time()
 
 NumberOfCameras = 0
 
+def unitVector(vector):
+    """ Returns the unit vector of the vector.  """
+    return vector / np.linalg.norm(vector)
+
+def angleBetween(v1, v2):
+    """ Returns the angle in radians between vectors 'v1' and 'v2'::
+
+            >>> angle_between((1, 0, 0), (0, 1, 0))
+            1.5707963267948966
+            >>> angle_between((1, 0, 0), (1, 0, 0))
+            0.0
+            >>> angle_between((1, 0, 0), (-1, 0, 0))
+            3.141592653589793
+    """
+    v1_u = unitVector(v1)
+    v2_u = unitVector(v2)
+    return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
+
+def createYRotationMatric(theta):
+    cos, sin = np.cos(theta), np.sin(theta)
+    return np.matrix([[cos, 0, sin], [0, 1, 0], [-sin, 0, cos]])
+
 def calculateMixedNormals():
 
     for card in range(1, 7):
@@ -42,7 +64,6 @@ def calculateMixedNormals():
 
         for h in range(height):
             normalize(encodedImage[h], copy=False)
-
 
         # only for visualising
         encodedImage = (encodedImage + 1.0) / 2.0
@@ -93,11 +114,25 @@ def calculateDiffuseNormals():
 
 def calculateSpecularNormals():
 
+    viewVectors = getTranslationVectorPerCamera('blocksExchangeForSpecular.xml')
+    viewVectors = valmap(lambda arr: arr[:3], viewVectors)
+    camera3 = viewVectors['card3']
+    camera5 = viewVectors['card5']
+    angle = angleBetween(camera3, camera5)
+    rotationMatrix = createYRotationMatric(-angle)
+
+    correctedViewVector = np.dot(rotationMatrix, viewVectors['card3'])
+    correctedViewVector = correctedViewVector.tolist()
+    correctedViewVector[0][2] *= -1
+    # print(correctedViewVector.shape)
+
+    # print(angle)
+
     images = []
 
     card = 1
 
-    prefix = "./normalSets10/card{}/".format(card)
+    prefix = "./normalSets10Linear/card{}/".format(card)
 
     xGradients = [prefix + str(name) + ".JPG" for name in range(3, 7)]
     yGradients = [prefix + str(name) + ".JPG" for name in range(7, 11)]
@@ -134,9 +169,25 @@ def calculateSpecularNormals():
     encodedImage[..., 1] = N_y[..., 2]
     encodedImage[..., 2] = N_z[..., 2]
 
+    # print(encodedImage.shape)
+
     for h in range(height):
         normalize(encodedImage[h], copy=False)
-        
+
+    encodedImage[..., 0] = encodedImage[..., 0] + correctedViewVector[0][0]
+    encodedImage[..., 1] = encodedImage[..., 1] + correctedViewVector[0][1]
+    encodedImage[..., 2] = encodedImage[..., 2] + correctedViewVector[0][2]
+
+    for h in range(height):
+        normalize(encodedImage[h], copy=False)
+
+    encodedImage = (encodedImage + 1.0) / 2.0
+    encodedImage *= 255.0
+
+    im = Image.fromarray(encodedImage.astype('uint8'))
+    im.save("specularNormal{}.jpg".format(card))    
+
+    # print(viewVectors)
         # now need to run addition with view vector and re-normalise 
 
 def getPhotoXMLBlock(pathToBlockExchangeXML):
@@ -231,7 +282,7 @@ def getCameraParameters(pathToBlockExchangeXML, pathToAgisoftXML):
         for photo in photos:
             cardToPhotoGroup[photo] = "photogoup{}".format(counter)
         counter += 1
-        
+
     counter = 1
 
     photogoupToCameraParameters = {}
@@ -251,7 +302,7 @@ def getCameraParameters(pathToBlockExchangeXML, pathToAgisoftXML):
         photogoupToCameraParameters["photogoup{}".format(counter)] = params
 
         counter += 1 
-    
+
     focalmmPerPhoto = getFocalFromAgisoftXml(pathToAgisoftXML)
 
     cardParams = valmap(lambda photogroup: photogoupToCameraParameters[photogroup], cardToPhotoGroup)
@@ -265,9 +316,9 @@ def getCameraParameters(pathToBlockExchangeXML, pathToAgisoftXML):
 if __name__ == "__main__":
     # calculateMixedNormals()
     # calculateDiffuseNormals()
-    # calculateSpecularNormals()
+    calculateSpecularNormals()
     # getTranslationVectorPerCamera('blocksExchangeForSpecular.xml')
     # getRotationMatrixPerCamera('bundler.out')
-    getCameraParameters('blocksExchangeForSpecular.xml', 'agisoftXML.xml')
+    # getCameraParameters('blocksExchangeForSpecular.xml', 'agisoftXML.xml')
     # getFocalFromAgisoftXml('agisoftXML.xml')
     print("--- %s seconds ---" % (time.time() - start_time))
