@@ -314,11 +314,6 @@ def getCameraParameters(pathToBlockExchangeXML, pathToAgisoftXML):
     return cardParams
 
 def createMeshLabxML(name):
-    # project = etree.Element('MeshLabProject')
-    # group = etree.SubElement(project, "MeshGroup")
-    # mlMesh = etree.Element("MLMesh", label="dneg1.onbj", filename="dneg1.obj")
-    # mesh = etree.SubElement(group, mlMesh)
-
     E = lxml.builder.ElementMaker()
     vcgCamera1 = "cam1"
     project = E.MeshLabProject(
@@ -388,6 +383,7 @@ def createVCGTags():
         )
 
         rasterTags.append(tag)
+
     return rasterTags
 
 
@@ -398,6 +394,6 @@ if __name__ == "__main__":
     # getRotationMatrixPerCamera('bundler.out')
     # getCameraParameters('blocksExchangeForSpecular.xml', 'agisoftXML.xml')
     # getFocalFromAgisoftXml('agisoftXML.xml')
-    createMeshLabxML("test")
+    # createMeshLabxML("test")
     # createVCGTags()
     print("--- %s seconds ---" % (time.time() - start_time))
