@@ -306,7 +306,7 @@ def getCameraParameters(pathToBlockExchangeXML, pathToAgisoftXML):
 
 def createMeshLabxML(name):
     E = lxml.builder.ElementMaker()
-    vcgCamera1 = "cam1"
+
     project = E.MeshLabProject(
         E.MeshGroup(
             E.MLMesh(
