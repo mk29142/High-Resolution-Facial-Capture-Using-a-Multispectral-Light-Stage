@@ -1,12 +1,13 @@
-import PIL
-import numpy as np
-from PIL import Image
-from numpy import array
-from sklearn.preprocessing import normalize
 import time
 import xml.etree.ElementTree as ET
-from lxml import etree
+
 import lxml.builder
+import numpy as np
+import PIL
+from lxml import etree
+from numpy import array
+from PIL import Image
+from sklearn.preprocessing import normalize
 from toolz.dicttoolz import valmap
 
 start_time = time.time()
