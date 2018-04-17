@@ -192,7 +192,7 @@ def getPhotoXMLBlock(pathToBlockExchangeXML):
     root = tree.getroot()
     block = root.find('Block')
     photoGroups = block.find('Photogroups').findall('Photogroup')
-    photos = map(lambda photogroup: photogroup.findall('Photo') , photoGroups)
+    photos = map(lambda photogroup: photogroup.findall('Photo'), photoGroups)
     photos = reduce(lambda x,y: x+y, photos)
     return photos
 
@@ -219,13 +219,16 @@ def getTranslationVectorPerCamera(pathToBlockExchangeXML):
 
     return vectorPerCamera
 
-def getRotationMatrixPerCamera(pathToBundlerOut):
+def getRotationMatrixPerCamera(pathToBundlerOut, pathToBlockExchangeXML):
+    photos = getPhotoXMLBlock(pathToBlockExchangeXML)
+    NumberOfCameras = len(photos)
+
+    rotationMatricPerCamera = {}
+
     with open(pathToBundlerOut) as f:
         f.readline()
         f.readline()
         f.readline()
-
-        rotationMatricPerCamera = {}
 
         for i in range(1,NumberOfCameras+1):
             card = "card{}".format(i)
@@ -317,6 +320,7 @@ def createMeshLabxML(name):
     # mesh = etree.SubElement(group, mlMesh)
 
     E = lxml.builder.ElementMaker()
+    vcgCamera1 = "cam1"
     project = E.MeshLabProject(
         E.MeshGroup(
             E.MLMesh(
@@ -328,18 +332,64 @@ def createMeshLabxML(name):
 """),
                 label="dneg1.onbj", filename="dneg1.obj"
             )
+        ),
+        E.RasterGroup(
+            *createVCGTags()
         )
     )
 
     tree = etree.ElementTree(project)
 
-    for elem in tree.iter():
-        print(elem)
-
-
     with open("{}.mlp".format(name), "wb") as f:
         f.write("<!DOCTYPE MeshLabDocument>\n")
         tree.write(f, pretty_print=True)
+
+def createVCGTags():
+    translationVectors = getTranslationVectorPerCamera('blocksExchangeForSpecular.xml')
+    rotationMatricies = getRotationMatrixPerCamera('bundler.out', 'blocksExchangeForSpecular.xml')
+    cameraParams = getCameraParameters('blocksExchangeForSpecular.xml', 'agisoftXML.xml')
+    focalLengths = getFocalFromAgisoftXml('agisoftXML.xml')
+
+    cards = sorted(map(lambda x: int(x.replace('card', '')), rotationMatricies.keys()))
+    cards = map(lambda x: "card{}".format(x), cards)
+
+    E = lxml.builder.ElementMaker()
+
+    rasterTags = []
+
+    for card in cards:
+        number = int(card.replace("card", ""))
+        rotationMatrix = rotationMatricies[card].replace('\n', " ")
+
+        translationVector = translationVectors[card]
+        translationVector = map(lambda x: x*-1, translationVector)
+        translationVector[-1] *= -1
+        translationVector = reduce(lambda x, y: "{} {}".format(x,y), translationVector)
+
+        cameraParam = cameraParams[card]
+        focalLength = focalLengths[card]
+        paramKeys = cameraParam.keys()
+
+        tag = E.MLRaster(
+             etree.Element('VCGCamera', 
+             RotationMatrix=rotationMatrix,
+             ViewportPx=cameraParam['ViewportPx'],
+             CameraType=cameraParam['CameraType'],
+             LensDistortion=cameraParam['LensDistortion'],
+             PixelSizeMm=cameraParam['PixelSizeMm'],
+             CenterPx=cameraParam['CenterPx'],
+             FocalMm=cameraParam['FocalMm'],
+             TranslationVector=translationVector), 
+             
+             E.Plane(semantic="1",
+             fileName="diffuseNormals/diffuseNormal{}.jpg".format(number)),
+
+             label="diffuseNormal{}".format(number)
+        )
+
+        rasterTags.append(tag)
+    return rasterTags
+
 
 if __name__ == "__main__":
     # calculateDiffuseNormals()
@@ -349,4 +399,5 @@ if __name__ == "__main__":
     # getCameraParameters('blocksExchangeForSpecular.xml', 'agisoftXML.xml')
     # getFocalFromAgisoftXml('agisoftXML.xml')
     createMeshLabxML("test")
+    # createVCGTags()
     print("--- %s seconds ---" % (time.time() - start_time))
