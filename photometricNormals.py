@@ -5,6 +5,8 @@ from numpy import array
 from sklearn.preprocessing import normalize
 import time
 import xml.etree.ElementTree as ET
+from lxml import etree
+import lxml.builder
 from toolz.dicttoolz import valmap
 
 start_time = time.time()
@@ -78,12 +80,12 @@ def calculateDiffuseNormals():
 
         images = []
 
-        prefix = "./normalSets10/card{}/".format(card)
+        prefix = "./normalSets10Linear/card{}/".format(card)
 
         names = [prefix + str(name) + ".JPG" for name in range(3, 16, 2)]
         names.remove(prefix + "11.JPG")
 
-        print(names)
+        # print(names)
 
         for i in names:
             img = Image.open(i)
@@ -183,7 +185,7 @@ def calculateSpecularNormals():
 
         im = Image.fromarray(encodedImage.astype('uint8'))
         im.save("specularNormals{}.jpg".format(card))    
-        
+
 
 def getPhotoXMLBlock(pathToBlockExchangeXML):
     tree = ET.parse(pathToBlockExchangeXML)
@@ -308,12 +310,43 @@ def getCameraParameters(pathToBlockExchangeXML, pathToAgisoftXML):
 
     return cardParams
 
+def createMeshLabxML(name):
+    # project = etree.Element('MeshLabProject')
+    # group = etree.SubElement(project, "MeshGroup")
+    # mlMesh = etree.Element("MLMesh", label="dneg1.onbj", filename="dneg1.obj")
+    # mesh = etree.SubElement(group, mlMesh)
+
+    E = lxml.builder.ElementMaker()
+    project = E.MeshLabProject(
+        E.MeshGroup(
+            E.MLMesh(
+                E.MLMatrix44("""
+1 0 0 0 
+0 1 0 0 
+0 0 1 0 
+0 0 0 1 
+"""),
+                label="dneg1.onbj", filename="dneg1.obj"
+            )
+        )
+    )
+
+    tree = etree.ElementTree(project)
+
+    for elem in tree.iter():
+        print(elem)
+
+
+    with open("{}.mlp".format(name), "wb") as f:
+        f.write("<!DOCTYPE MeshLabDocument>\n")
+        tree.write(f, pretty_print=True)
+
 if __name__ == "__main__":
-    # calculateMixedNormals()
     # calculateDiffuseNormals()
-    calculateSpecularNormals()
+    # calculateSpecularNormals()
     # getTranslationVectorPerCamera('blocksExchangeForSpecular.xml')
     # getRotationMatrixPerCamera('bundler.out')
     # getCameraParameters('blocksExchangeForSpecular.xml', 'agisoftXML.xml')
     # getFocalFromAgisoftXml('agisoftXML.xml')
+    createMeshLabxML("test")
     print("--- %s seconds ---" % (time.time() - start_time))
