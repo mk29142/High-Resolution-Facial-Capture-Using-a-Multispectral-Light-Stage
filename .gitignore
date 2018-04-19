@@ -1,10 +1,13 @@
 *.JPG
+*.png
 *.zip
 *.mtl
 *.obj
 *.ply
 *.mlp
 list.txt
+*.txt
+!requirments.txt
 *.out
 *.xml
 .vscode

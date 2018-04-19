@@ -91,9 +91,9 @@ def calculateDiffuseNormals():
 
         encodedImage = np.empty_like(N_x).astype('float64')
 
-        encodedImage[..., 0] = N_x[..., 2]
-        encodedImage[..., 1] = N_y[..., 2]
-        encodedImage[..., 2] = N_z[..., 2]
+        encodedImage[..., 0] = N_x[..., 0]
+        encodedImage[..., 1] = N_y[..., 0]
+        encodedImage[..., 2] = N_z[..., 0]
 
         for h in range(height):
             normalize(encodedImage[h], copy=False)
@@ -102,8 +102,8 @@ def calculateDiffuseNormals():
         encodedImage = (encodedImage + 1.0) / 2.0
         encodedImage *= 255.0
 
-        im = Image.fromarray(encodedImage.astype('uint8'))
-        im.save("diffuseNormal{}.jpg".format(card))
+        im = Image.fromarray(encodedImage.astype('uint16'))
+        im.save("diffuseNormal{}.png".format(card, "PNG"))
 
 def calculateSpecularNormals():
 
@@ -148,6 +148,8 @@ def calculateSpecularNormals():
         specularZImages = [zImages[1] - zImages[0], zImages[3] - zImages[2]]
 
         images = specularXImages + specularYImages + specularZImages
+        images = np.array(images)
+        images = np.clip(images, 0, 255)
 
         height, width, _ = images[0].shape
 
@@ -157,9 +159,9 @@ def calculateSpecularNormals():
 
         encodedImage = np.empty_like(N_x).astype('float64')
 
-        encodedImage[..., 0] = N_x[..., 2]
-        encodedImage[..., 1] = N_y[..., 2]
-        encodedImage[..., 2] = N_z[..., 2]
+        encodedImage[..., 0] = N_x[..., 1]
+        encodedImage[..., 1] = N_y[..., 1]
+        encodedImage[..., 2] = N_z[..., 1]
 
         for h in range(height):
             normalize(encodedImage[h], copy=False)
@@ -174,8 +176,10 @@ def calculateSpecularNormals():
         encodedImage = (encodedImage + 1.0) / 2.0
         encodedImage *= 255.0
 
+        encodedImage = np.clip(encodedImage, 0, 255)
+
         im = Image.fromarray(encodedImage.astype('uint8'))
-        im.save("specularNormals{}.jpg".format(card))    
+        im.save("specularNormal{}.png".format(card), "PNG")    
 
 
 def getPhotoXMLBlock(pathToBlockExchangeXML):
@@ -380,7 +384,7 @@ def createVCGTags():
 
 if __name__ == "__main__":
     # calculateDiffuseNormals()
-    # calculateSpecularNormals()
+    calculateSpecularNormals()
     # getTranslationVectorPerCamera('blocksExchangeForSpecular.xml')
     # getRotationMatrixPerCamera('bundler.out')
     # getCameraParameters('blocksExchangeForSpecular.xml', 'agisoftXML.xml')
