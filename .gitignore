@@ -7,6 +7,7 @@
 *.mlp
 list.txt
 *.txt
+*.tiff
 !requirments.txt
 *.out
 *.xml
@@ -14,3 +15,4 @@ list.txt
 env
 *.cc
 *.exe
+/*

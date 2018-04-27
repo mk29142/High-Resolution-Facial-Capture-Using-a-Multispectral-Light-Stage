@@ -1,6 +1,8 @@
 import time
 import xml.etree.ElementTree as ET
 
+import cv2 as cv
+
 import lxml.builder
 import numpy as np
 import PIL
@@ -9,6 +11,12 @@ from numpy import array
 from PIL import Image
 from sklearn.preprocessing import normalize
 from toolz.dicttoolz import valmap
+
+import cv2 as cv
+
+# from multiprocessing import Pool
+
+import concurrent.futures
 
 start_time = time.time()
 
@@ -65,47 +73,47 @@ def calculateMixedNormals():
         im = Image.fromarray(encodedImage.astype('uint8'))
         im.save("encoded{}.jpg".format(card))
 
-def calculateDiffuseNormals():
+def calculateDiffuseNormals(card):
 
-    for card in range(1, 11):
+    # for card in range(3, 4):
 
-        images = []
+    images = []
 
-        prefix = "./normalSets10Linear/card{}/".format(card)
+    prefix = "./normalSets10Linear/card{}/".format(card)
 
-        names = [prefix + str(name) + ".JPG" for name in range(3, 16, 2)]
-        names.remove(prefix + "11.JPG")
+    names = [prefix + str(name) + ".TIF" for name in range(3, 16, 2)]
+    names.remove(prefix + "11.TIF")
 
-        # print(names)
+    # print(names)
 
-        for i in names:
-            img = Image.open(i)
-            arr = array(img)
-            images.append(arr.astype('float64'))
+    for i in names:
+        img = Image.open(i)
+        arr = array(img)
+        images.append(arr.astype('float64'))
 
-        height, width, _ = images[0].shape
+    height, width, _ = images[0].shape
 
-        N_x = (images[0] - images[1]) / 255
-        N_y = (images[2] - images[3]) / 255
-        N_z = (images[4] - images[5]) / 255
+    N_x = (images[0] - images[1]) / 255
+    N_y = (images[2] - images[3]) / 255
+    N_z = (images[4] - images[5]) / 255
 
-        encodedImage = np.empty_like(N_x).astype('float64')
+    encodedImage = np.empty_like(N_x).astype('float64')
 
-        encodedImage[..., 0] = N_x[..., 0]
-        encodedImage[..., 1] = N_y[..., 0]
-        encodedImage[..., 2] = N_z[..., 0]
+    encodedImage[..., 0] = N_x[..., 0]
+    encodedImage[..., 1] = N_y[..., 0]
+    encodedImage[..., 2] = N_z[..., 0]
 
-        for h in range(height):
-            normalize(encodedImage[h], copy=False)
+    for h in range(height):
+        normalize(encodedImage[h], copy=False)
 
-        # only for visualising
-        encodedImage = (encodedImage + 1.0) / 2.0
-        encodedImage *= 255.0
+    # only for visualising
+    encodedImage = (encodedImage + 1.0) / 2.0
+    encodedImage *= 255.0
 
-        im = Image.fromarray(encodedImage.astype('uint16'))
-        im.save("diffuseNormal{}.png".format(card, "PNG"))
+    im = Image.fromarray(encodedImage.astype('uint8'))
+    im.save("diffuseNormal{}.jpg".format(card))
 
-def calculateSpecularNormals():
+def calculateSpecularNormals(card):
 
     viewVectors = getTranslationVectorPerCamera('blocksExchangeForSpecular.xml')
     viewVectors = valmap(lambda arr: arr[:3], viewVectors)
@@ -115,71 +123,102 @@ def calculateSpecularNormals():
     rotationMatrix = createYRotationMatric(-angle)
 
     # card = 3
+    # for card in range(3, 4):
+    correctedViewVector = np.dot(rotationMatrix, viewVectors['card{}'.format(card)])
+    correctedViewVector = correctedViewVector.tolist()[0]
+    correctedViewVector[2] *= -1
+
+    correctedViewVector = unitVector(correctedViewVector)
+
+    images = []
+
+    prefix = "./normalSets10Linear/card{}/".format(card)
+
+    xGradients = [prefix + str(name) + ".TIF" for name in range(3, 7)]
+    yGradients = [prefix + str(name) + ".TIF" for name in range(7, 11)]
+    zGradients = [prefix + str(name) + ".TIF" for name in range(13, 17)]
+
+    names = xGradients + yGradients + zGradients
+
+    for i in names:
+        img = Image.open(i)
+        arr = array(img)
+        images.append(arr.astype('float64'))
+
+    height, width, _ = images[0].shape
+
+    xImages = images[:4]
+    yImages = images[4:8]
+    zImages = images[8:]
+
+    specularXImages = [xImages[1] - xImages[0], xImages[3] - xImages[2]]
+    specularYImages = [yImages[1] - yImages[0], yImages[3] - yImages[2]]
+    specularZImages = [zImages[1] - zImages[0], zImages[3] - zImages[2]]
+
+    images = specularXImages + specularYImages + specularZImages
+    images = np.array(images)
+    images = np.clip(images, 0, 255)
+
+    height, width, _ = images[0].shape
+
+    N_x = (images[0] - images[1]) / 255
+    N_y = (images[2] - images[3]) / 255
+    N_z = (images[4] - images[5]) / 255
+
+    encodedImage = np.empty_like(N_x).astype('float64')
+
+    encodedImage[..., 0] = N_x[..., 1]
+    encodedImage[..., 1] = N_y[..., 1]
+    encodedImage[..., 2] = N_z[..., 1]
+
+    for h in range(height):
+        normalize(encodedImage[h], copy=False)
+
+    encodedImage[..., 0] = encodedImage[..., 0] + correctedViewVector[0]
+    encodedImage[..., 1] = encodedImage[..., 1] + correctedViewVector[1]
+    encodedImage[..., 2] = encodedImage[..., 2] + correctedViewVector[2]
+
+    for h in range(height):
+        normalize(encodedImage[h], copy=False)
+
+    encodedImage = (encodedImage + 1.0) / 2.0
+    encodedImage *= 255.0
+
+    encodedImage = np.clip(encodedImage, 0, 255)
+
+    im = Image.fromarray(encodedImage.astype('uint8'))
+    im.save("specularNormal{}.tiff".format(card), "PNG")
+
+def specularHack():
+
     for card in range(1, 11):
-        correctedViewVector = np.dot(rotationMatrix, viewVectors['card{}'.format(card)])
-        correctedViewVector = correctedViewVector.tolist()[0]
-        correctedViewVector[2] *= -1
+        diffuse = Image.open("diffuseNormals/diffuseNormal{}.png".format(card))
+        specular = Image.open("specularNormals/specularNormal{}.png".format(card))
+        blurredSpecular = specular.filter(PIL.ImageFilter.GaussianBlur(radius=10))
 
-        correctedViewVector = unitVector(correctedViewVector)
 
-        images = []
+        # im = Image.fromarray(blurredSpecular.astype('uint8'))
+        # blurredSpecular.save("blurredSpecular{}.png".format(card), "PNG")
 
-        prefix = "./normalSets10Linear/card{}/".format(card)
+        diffuse = np.array(diffuse)
+        specular = np.array(specular)
+        blurredSpecular = np.array(blurredSpecular)
 
-        xGradients = [prefix + str(name) + ".JPG" for name in range(3, 7)]
-        yGradients = [prefix + str(name) + ".JPG" for name in range(7, 11)]
-        zGradients = [prefix + str(name) + ".JPG" for name in range(13, 17)]
+        highPassFilter = (specular - blurredSpecular)
+        highPassFilter = np.clip(highPassFilter, 0, 255) 
 
-        names = xGradients + yGradients + zGradients
+        im = Image.fromarray(highPassFilter.astype('uint8'))
+        im.save("highPassFilter{}.png".format(card), "PNG")
 
-        for i in names:
-            img = Image.open(i)
-            arr = array(img)
-            images.append(arr.astype('float64'))
+        newSpec = highPassFilter + diffuse
+        newSpec = np.clip(newSpec, 0, 255) 
 
-        height, width, _ = images[0].shape
-
-        xImages = images[:4]
-        yImages = images[4:8]
-        zImages = images[8:]
-
-        specularXImages = [xImages[1] - xImages[0], xImages[3] - xImages[2]]
-        specularYImages = [yImages[1] - yImages[0], yImages[3] - yImages[2]]
-        specularZImages = [zImages[1] - zImages[0], zImages[3] - zImages[2]]
-
-        images = specularXImages + specularYImages + specularZImages
-        images = np.array(images)
-        images = np.clip(images, 0, 255)
-
-        height, width, _ = images[0].shape
-
-        N_x = (images[0] - images[1]) / 255
-        N_y = (images[2] - images[3]) / 255
-        N_z = (images[4] - images[5]) / 255
-
-        encodedImage = np.empty_like(N_x).astype('float64')
-
-        encodedImage[..., 0] = N_x[..., 1]
-        encodedImage[..., 1] = N_y[..., 1]
-        encodedImage[..., 2] = N_z[..., 1]
-
+        height, width, _ = newSpec.shape
         for h in range(height):
-            normalize(encodedImage[h], copy=False)
+            normalize(newSpec[h], copy=False)
 
-        encodedImage[..., 0] = encodedImage[..., 0] + correctedViewVector[0]
-        encodedImage[..., 1] = encodedImage[..., 1] + correctedViewVector[1]
-        encodedImage[..., 2] = encodedImage[..., 2] + correctedViewVector[2]
-
-        for h in range(height):
-            normalize(encodedImage[h], copy=False)
-
-        encodedImage = (encodedImage + 1.0) / 2.0
-        encodedImage *= 255.0
-
-        encodedImage = np.clip(encodedImage, 0, 255)
-
-        im = Image.fromarray(encodedImage.astype('uint8'))
-        im.save("specularNormal{}.png".format(card), "PNG")    
+        im = Image.fromarray(newSpec.astype('uint8'))
+        im.save("newSpec{}.png".format(card), "PNG")
 
 
 def getPhotoXMLBlock(pathToBlockExchangeXML):
@@ -383,12 +422,30 @@ def createVCGTags():
 
 
 if __name__ == "__main__":
+    # specularHack()
     # calculateDiffuseNormals()
-    calculateSpecularNormals()
+    # calculateSpecularNormals()
     # getTranslationVectorPerCamera('blocksExchangeForSpecular.xml')
     # getRotationMatrixPerCamera('bundler.out')
     # getCameraParameters('blocksExchangeForSpecular.xml', 'agisoftXML.xml')
     # getFocalFromAgisoftXml('agisoftXML.xml')
     # createMeshLabxML("test")
     # createVCGTags()
+    # img = cv.imread("correctspecular3.jpg")
+    # print(type(img))
+    # cv.imwrite("test.png", img)
+
+    # for card in range(1, 11):
+    #     calculateSpecularNormals(card)
+
+    # pool = Pool(processes=3)
+    # inputs = range(1, 11)
+    # pool.map_async(calculateSpecularNormals, inputs)
+
+    # pool.close()
+    # pool.join()
+
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        executor.map(calculateSpecularNormals, range(1, 11))
+
     print("--- %s seconds ---" % (time.time() - start_time))
