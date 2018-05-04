@@ -7,6 +7,8 @@ import time
 import xml.etree.ElementTree as ET
 from toolz.dicttoolz import valmap
 
+from photometricNormals import rotationMatrix
+
 start_time = time.time()
 
 def createUVSpace():
@@ -67,6 +69,8 @@ def createUVSpace2(pathToPLY, pathToTexture):
     uvImage = np.zeros([1024, 1024, 3],dtype=np.uint8)
     uvImage.fill(0)
 
+    matrix = rotationMatrix('blockExchangeForUV.xml')
+
     with open(pathToPLY) as f:
         numberOfVerticies = 0
         numberOfFaces = 0
@@ -85,7 +89,10 @@ def createUVSpace2(pathToPLY, pathToTexture):
         for i in range(numberOfVerticies):
             coords = f.readline().replace(" \n", "").split(" ")
             coords = map(float, coords)
-            # coords = np.dot(rotationMatrix, coords).tolist()[0]
+            coords[2] = coords[2] * -1
+            # print(coords)
+            coords = np.dot(matrix, coords)
+            # print(coords)
             verticies.append(coords)
 
         indexToUV = {}
@@ -118,7 +125,11 @@ def createUVSpace2(pathToPLY, pathToTexture):
             z = verticies[vertex][2]
             coords.append(indexToUV[key])
 
-            u = np.arctan(x/z)
+            u = np.arctan2(x, z)
+            if z < 0 and u < 0:
+                u = u + np.pi
+            elif z < 0 and u > 0:
+                u = u - np.pi
             us.append(u)
 
             v = y
@@ -153,9 +164,9 @@ def createUVSpace2(pathToPLY, pathToTexture):
             G = textureImage[int(tV)][int(tU)][1]
             B = textureImage[int(tV)][int(tU)][2]
 
-            uvImage[u][v][0] = 255
-            uvImage[u][v][1] = 255
-            uvImage[u][v][2] = 255
+            uvImage[1023 - v][u][0] = 255
+            uvImage[1023 - v][u][1] = 255
+            uvImage[1023 - v][u][2] = 255
 
         im = Image.fromarray(uvImage.astype('uint8'))
         im.save("uv2.png")

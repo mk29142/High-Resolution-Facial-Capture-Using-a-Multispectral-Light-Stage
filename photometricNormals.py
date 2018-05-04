@@ -32,7 +32,7 @@ def angleBetween(v1, v2):
 
 def createYRotationMatric(theta):
     cos, sin = np.cos(theta), np.sin(theta)
-    return np.matrix([[cos, 0, sin], [0, 1, 0], [-sin, 0, cos]])
+    return np.array([[cos, 0, sin], [0, 1, 0], [-sin, 0, cos]])
 
 def calculateMixedNormals():
 
@@ -112,6 +112,18 @@ def calculateDiffuseNormals(card):
 
     im = Image.fromarray(encodedImage.astype('uint8'))
     im.save("diffuseNormal{}.jpg".format(card))
+
+def rotationMatrix(path):
+    viewVectors = getTranslationVectorPerCamera(path)
+    viewVectors = valmap(lambda arr: arr[:3], viewVectors)
+    camera3 = viewVectors['card3JPG']
+    camera5 = viewVectors['card5JPG']
+    angle = angleBetween(np.array(camera3), np.array(camera5))
+    rotationMatrix = createYRotationMatric(np.deg2rad(180))
+
+    print(np.rad2deg(-angle))
+
+    return rotationMatrix
 
 def calculateSpecularNormals(card):
 
