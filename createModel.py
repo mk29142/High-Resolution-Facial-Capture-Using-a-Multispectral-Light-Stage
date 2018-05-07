@@ -33,10 +33,10 @@ def createAndSaveModel(filename):
     chunk.buildDenseCloud()
     chunk.buildModel(surface = PhotoScan.Arbitrary, interpolation = PhotoScan.EnabledInterpolation, face_count = PhotoScan.FaceCount.MediumFaceCount, source = PhotoScan.DataSource.DenseCloudData)
 
-    chunk.exportCameras("{}bundlerTest.out".format(path), PhotoScan.CamerasFormat.CamerasFormatBundler)
-    chunk.exportCameras("{}agisoftXMLTest.xml".format(path), PhotoScan.CamerasFormat.CamerasFormatXML)
-    chunk.exportCameras("{}blocksExchangeTest.xml".format(path), PhotoScan.CamerasFormat.CamerasFormatBlocksExchange)
-    chunk.exportModel("{}modelExportTest.obj".format(path), format=PhotoScan.ModelFormat.ModelFormatOBJ)
+    chunk.exportCameras("{}bundler.out".format(path), PhotoScan.CamerasFormat.CamerasFormatBundler)
+    chunk.exportCameras("{}agisoftXML.xml".format(path), PhotoScan.CamerasFormat.CamerasFormatXML)
+    chunk.exportCameras("{}blocksExchange.xml".format(path), PhotoScan.CamerasFormat.CamerasFormatBlocksExchange)
+    chunk.exportModel("{}modelExport.obj".format(path), format=PhotoScan.ModelFormat.ModelFormatOBJ)
 
     doc.save(path=path+filename, chunks= [doc.chunk])
 
