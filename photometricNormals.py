@@ -137,7 +137,7 @@ def calculateSpecularNormals(card):
     # card = 3
     # for card in range(3, 4):
     correctedViewVector = np.dot(rotationMatrix, viewVectors['card{}'.format(card)])
-    correctedViewVector = correctedViewVector.tolist()[0]
+    correctedViewVector = correctedViewVector.tolist()
     correctedViewVector[2] *= -1
 
     correctedViewVector = unitVector(correctedViewVector)
@@ -449,13 +449,6 @@ if __name__ == "__main__":
 
     # for card in range(1, 11):
     #     calculateSpecularNormals(card)
-
-    # pool = Pool(processes=3)
-    # inputs = range(1, 11)
-    # pool.map_async(calculateSpecularNormals, inputs)
-
-    # pool.close()
-    # pool.join()
 
     with concurrent.futures.ProcessPoolExecutor() as executor:
         executor.map(calculateSpecularNormals, range(1, 11))
