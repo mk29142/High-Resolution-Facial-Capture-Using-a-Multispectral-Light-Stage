@@ -12,10 +12,10 @@ def createAndSaveModel(filename):
 
     photos = []
 
-    for i in range(1,7):
+    for i in range(1, 11):
         photos.append(path + "card{}.JPG".format(i))
 
-    chunk.addPhotos(photos)
+    chunk.addPhotos(photos) 
 
     # align cameras, first pass
     for frame in chunk.frames:
@@ -31,7 +31,12 @@ def createAndSaveModel(filename):
 
     chunk.buildDepthMaps(quality = PhotoScan.UltraQuality, filter = PhotoScan.AggressiveFiltering)
     chunk.buildDenseCloud()
-    # chunk.buildModel(surface = PhotoScan.Arbitrary, interpolation = PhotoScan.EnabledInterpolation, face_count = 1000000, source = PhotoScan.DataSource.DenseCloudData)
+    chunk.buildModel(surface = PhotoScan.Arbitrary, interpolation = PhotoScan.EnabledInterpolation, face_count = PhotoScan.FaceCount.MediumFaceCount, source = PhotoScan.DataSource.DenseCloudData)
+
+    chunk.exportCameras("{}bundlerTest.out".format(path), PhotoScan.CamerasFormat.CamerasFormatBundler)
+    chunk.exportCameras("{}agisoftXMLTest.xml".format(path), PhotoScan.CamerasFormat.CamerasFormatXML)
+    chunk.exportCameras("{}blocksExchangeTest.xml".format(path), PhotoScan.CamerasFormat.CamerasFormatBlocksExchange)
+    chunk.exportModel("{}modelExportTest.obj".format(path), format=PhotoScan.ModelFormat.ModelFormatOBJ)
 
     doc.save(path=path+filename, chunks= [doc.chunk])
 
