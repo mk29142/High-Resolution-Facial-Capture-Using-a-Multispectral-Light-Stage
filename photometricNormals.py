@@ -79,7 +79,7 @@ def calculateDiffuseNormals(card):
 
     images = []
 
-    prefix = "./normalSets10Linear/card{}/".format(card)
+    prefix = "./card{}/".format(card)
 
     names = [prefix + str(name) + ".TIF" for name in range(3, 16, 2)]
     names.remove(prefix + "11.TIF")
@@ -111,7 +111,7 @@ def calculateDiffuseNormals(card):
     encodedImage *= 255.0
 
     im = Image.fromarray(encodedImage.astype('uint8'))
-    im.save("diffuseNormal{}.jpg".format(card))
+    im.save("diffuseNormal{}.png".format(card))
 
 def rotationMatrix(path):
     viewVectors = getTranslationVectorPerCamera(path)
@@ -127,15 +127,13 @@ def rotationMatrix(path):
 
 def calculateSpecularNormals(card):
 
-    viewVectors = getTranslationVectorPerCamera('blocksExchangeForSpecular.xml')
+    viewVectors = getTranslationVectorPerCamera('blocksExchange.xml')
     viewVectors = valmap(lambda arr: arr[:3], viewVectors)
     camera3 = viewVectors['card3']
     camera5 = viewVectors['card5']
     angle = angleBetween(np.array(camera3), np.array(camera5))
     rotationMatrix = createYRotationMatric(-angle)
 
-    # card = 3
-    # for card in range(3, 4):
     correctedViewVector = np.dot(rotationMatrix, viewVectors['card{}'.format(card)])
     correctedViewVector = correctedViewVector.tolist()
     correctedViewVector[2] *= -1
@@ -144,7 +142,7 @@ def calculateSpecularNormals(card):
 
     images = []
 
-    prefix = "./normalSets10Linear/card{}/".format(card)
+    prefix = "./card{}/".format(card)
 
     xGradients = [prefix + str(name) + ".TIF" for name in range(3, 7)]
     yGradients = [prefix + str(name) + ".TIF" for name in range(7, 11)]
@@ -199,7 +197,7 @@ def calculateSpecularNormals(card):
     encodedImage = np.clip(encodedImage, 0, 255)
 
     im = Image.fromarray(encodedImage.astype('uint8'))
-    im.save("specularNormal{}.tiff".format(card), "PNG")
+    im.save("specularNormal{}.png".format(card), "PNG")
 
 def specularHack():
 
@@ -257,7 +255,7 @@ def getTranslationVectorPerCamera(pathToBlockExchangeXML):
         name = getCameraName(photo)
 
         center = photo.find('Pose').find('Center')
-        
+
         #may need to negate coord value for meshlab project
         coords = map(lambda axis: float(axis.text), center)
         vectorPerCamera[name] = coords
@@ -301,7 +299,7 @@ def getFocalFromAgisoftXml(pathToAgisoftXML):
 
     for camera in cameras:
         photoToCamera[camera.get('label')] = camera.get('sensor_id')
-    
+
     sensors = root.find('chunk').find('sensors')
     sensorFocalLength = {}
 
@@ -347,7 +345,7 @@ def getCameraParameters(pathToBlockExchangeXML, pathToAgisoftXML):
 
         photogoupToCameraParameters["photogoup{}".format(counter)] = params
 
-        counter += 1 
+        counter += 1
 
     focalmmPerPhoto = getFocalFromAgisoftXml(pathToAgisoftXML)
 
@@ -386,9 +384,9 @@ def createMeshLabXML(name, objectName):
         tree.write(f, pretty_print=True)
 
 def createVCGTags():
-    translationVectors = getTranslationVectorPerCamera('blocksExchangeForSpecular.xml')
-    rotationMatricies = getRotationMatrixPerCamera('bundler.out', 'blocksExchangeForSpecular.xml')
-    cameraParams = getCameraParameters('blocksExchangeForSpecular.xml', 'agisoftXML.xml')
+    translationVectors = getTranslationVectorPerCamera('blocksExchange.xml')
+    rotationMatricies = getRotationMatrixPerCamera('bundler.out', 'blocksExchange.xml')
+    cameraParams = getCameraParameters('blocksExchange.xml', 'agisoftXML.xml')
     focalLengths = getFocalFromAgisoftXml('agisoftXML.xml')
 
     cards = sorted(map(lambda x: int(x.replace('card', '')), rotationMatricies.keys()))
@@ -412,7 +410,7 @@ def createVCGTags():
         paramKeys = cameraParam.keys()
 
         tag = E.MLRaster(
-             etree.Element('VCGCamera', 
+             etree.Element('VCGCamera',
              RotationMatrix=rotationMatrix,
              ViewportPx=cameraParam['ViewportPx'],
              CameraType=cameraParam['CameraType'],
@@ -420,8 +418,8 @@ def createVCGTags():
              PixelSizeMm=cameraParam['PixelSizeMm'],
              CenterPx=cameraParam['CenterPx'],
              FocalMm=cameraParam['FocalMm'],
-             TranslationVector=translationVector), 
-             
+             TranslationVector=translationVector),
+
              E.Plane(semantic="1",
              fileName="diffuseNormals/diffuseNormal{}.jpg".format(number)),
 
@@ -434,23 +432,23 @@ def createVCGTags():
 
 
 if __name__ == "__main__":
-    # specularHack()
-    # calculateDiffuseNormals()
-    # calculateSpecularNormals()
-    # getTranslationVectorPerCamera('blocksExchangeForSpecular.xml')
-    # getRotationMatrixPerCamera('bundler.out')
-    # getCameraParameters('blocksExchangeForSpecular.xml', 'agisoftXML.xml')
-    # getFocalFromAgisoftXml('agisoftXML.xml')
-    # createMeshLabxML("test")
-    # createVCGTags()
-    # img = cv.imread("correctspecular3.jpg")
-    # print(type(img))
-    # cv.imwrite("test.png", img)
+    parser = argparse.ArgumentParser()
 
-    # for card in range(1, 11):
-    #     calculateSpecularNormals(card)
+    parser.add_argument('--maps', action="store_true", default=False)
+    parser.add_argument('--diffuseProj', action="store_true", default=False)
+    parser.add_argument('--specularProj', action="store_true", default=False)
 
-    with concurrent.futures.ProcessPoolExecutor() as executor:
-        executor.map(calculateSpecularNormals, range(1, 11))
+    if args.maps:
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            executor.map(calculateDiffuseNormals, range(1, 11))
+
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            executor.map(calculateSpecularNormals, range(1, 11))
+
+    if args.diffuseProj:
+        createMeshLabXML("diffuseProject", "agisoftExport")
+
+    if args.specularProj:
+        createMeshLabXML("specularProject", "diffuseEmbossed")
 
     print("--- %s seconds ---" % (time.time() - start_time))
