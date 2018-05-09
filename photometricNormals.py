@@ -359,7 +359,7 @@ def getCameraParameters(pathToBlockExchangeXML, pathToAgisoftXML):
 
     return cardParams
 
-def createMeshLabxML(name):
+def createMeshLabXML(name, objectName):
     E = lxml.builder.ElementMaker()
 
     project = E.MeshLabProject(
@@ -371,7 +371,7 @@ def createMeshLabxML(name):
 0 0 1 0 
 0 0 0 1 
 """),
-                label="dneg1.onbj", filename="dneg1.obj"
+                label="{}.obj".format(objectName), filename="{}.obj".format(objectName)
             )
         ),
         E.RasterGroup(

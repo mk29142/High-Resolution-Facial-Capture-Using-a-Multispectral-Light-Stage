@@ -1,0 +1,27 @@
+<!DOCTYPE FilterScript>
+<FilterScript>
+ <filter name="Parameterization + texturing from registered rasters">
+  <Param type="RichInt" description="Texture size" value="1024" name="textureSize" tooltip="Specifies the dimension of the generated texture"/>
+  <Param type="RichString" description="Texture name" value="specularTexture.png" name="textureName" tooltip="Specifies the name of the file into which the texture image will be saved"/>
+  <Param type="RichBool" description="Color correction" value="true" name="colorCorrection" tooltip="If true, the final texture is corrected so as to ensure seamless transitions"/>
+  <Param type="RichInt" description="Color correction filter" value="1" name="colorCorrectionFilterSize" tooltip="It is the radius (in pixel) of the kernel that is used to compute the difference between corresponding texels in different rasters. Default is 1 that generate a 3x3 kernel. Highest values increase the robustness of the color correction process in the case of strong image-to-geometry misalignments"/>
+  <Param type="RichBool" description="Use distance weight" value="true" name="useDistanceWeight" tooltip="Includes a weight accounting for the distance to the camera during the computation of reference images"/>
+  <Param type="RichBool" description="Use image border weight" value="true" name="useImgBorderWeight" tooltip="Includes a weight accounting for the distance to the image border during the computation of reference images"/>
+  <Param type="RichBool" description="Use image alpha weight" value="false" name="useAlphaWeight" tooltip="If true, alpha channel of the image is used as additional weight. In this way it is possible to mask-out parts of the images that should not be projected on the mesh. Please note this is not a transparency effect, but just influences the weigthing between different images"/>
+  <Param type="RichBool" description="Clean isolated triangles" value="true" name="cleanIsolatedTriangles" tooltip="Remove all patches compound of a single triangle by aggregating them to adjacent patches"/>
+  <Param type="RichBool" description="UV stretching" value="false" name="stretchingAllowed" tooltip="If true, texture coordinates are stretched so as to cover the full interval [0,1] for both directions"/>
+  <Param type="RichInt" description="Texture gutter" value="4" name="textureGutter" tooltip="Extra boundary to add to each patch before packing in texture space (in pixels)"/>
+ </filter>
+ <filter name="Transfer: Texture to Vertex Color (1 or 2 meshes)">
+  <Param type="RichMesh" description="Source Mesh" value="0" name="sourceMesh" tooltip="The mesh with associated texture that we want to sample from"/>
+  <Param type="RichMesh" description="Target Mesh" value="0" name="targetMesh" tooltip="The mesh whose vertex color will be filled according to source mesh texture"/>
+  <Param type="RichAbsPerc" description="Max Dist Search" value="0.01411" name="upperBound" min="0" max="0.705499" tooltip="Sample points for which we do not find anything whithin this distance are rejected and not considered for recovering color"/>
+ </filter>
+ <filter name="Per Vertex Normal Function">
+  <Param type="RichString" description="func nx = " value="((r/255)*2)-1" name="x" tooltip="insert function to generate new x for the normal"/>
+  <Param type="RichString" description="func ny = " value="((g/255)*2)-1" name="y" tooltip="insert function to generate new y for the normal"/>
+  <Param type="RichString" description="func nz = " value="((b/255)*2)-1" name="z" tooltip="insert function to generate new z for the normal"/>
+  <Param type="RichBool" description="only on selection" value="false" name="onselected" tooltip="if checked, only affects selected vertices"/>
+ </filter>
+ <filter name="Normalize Vertex Normals"/>
+</FilterScript>
