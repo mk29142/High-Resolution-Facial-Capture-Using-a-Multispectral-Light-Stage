@@ -357,7 +357,7 @@ def getCameraParameters(pathToBlockExchangeXML, pathToAgisoftXML):
 
     return cardParams
 
-def createMeshLabXML(name, objectName):
+def createMeshLabXML(name, objectName, type):
     E = lxml.builder.ElementMaker()
 
     project = E.MeshLabProject(
@@ -373,7 +373,7 @@ def createMeshLabXML(name, objectName):
             )
         ),
         E.RasterGroup(
-            *createVCGTags()
+            *createVCGTags(type)
         )
     )
 
@@ -383,7 +383,7 @@ def createMeshLabXML(name, objectName):
         f.write("<!DOCTYPE MeshLabDocument>\n")
         tree.write(f, pretty_print=True)
 
-def createVCGTags():
+def createVCGTags(ntype):
     translationVectors = getTranslationVectorPerCamera('blocksExchange.xml')
     rotationMatricies = getRotationMatrixPerCamera('bundler.out', 'blocksExchange.xml')
     cameraParams = getCameraParameters('blocksExchange.xml', 'agisoftXML.xml')
@@ -421,9 +421,9 @@ def createVCGTags():
              TranslationVector=translationVector),
 
              E.Plane(semantic="1",
-             fileName="diffuseNormals/diffuseNormal{}.jpg".format(number)),
+             fileName="{}Normal{}.png".format(ntype, number)),
 
-             label="diffuseNormal{}".format(number)
+             label="{}Normal{}".format(ntype, number)
         )
 
         rasterTags.append(tag)
@@ -438,6 +438,8 @@ if __name__ == "__main__":
     parser.add_argument('--diffuseProj', action="store_true", default=False)
     parser.add_argument('--specularProj', action="store_true", default=False)
 
+    args = parser.parse_args()
+
     if args.maps:
         with concurrent.futures.ProcessPoolExecutor() as executor:
             executor.map(calculateDiffuseNormals, range(1, 11))
@@ -446,9 +448,9 @@ if __name__ == "__main__":
             executor.map(calculateSpecularNormals, range(1, 11))
 
     if args.diffuseProj:
-        createMeshLabXML("diffuseProject", "agisoftExport")
+        createMeshLabXML("diffuseProject", "agisoftExport", "diffuse")
 
     if args.specularProj:
-        createMeshLabXML("specularProject", "diffuseEmbossed")
+        createMeshLabXML("specularProject", "diffuseEmbossed", "specular")
 
     print("--- %s seconds ---" % (time.time() - start_time))
