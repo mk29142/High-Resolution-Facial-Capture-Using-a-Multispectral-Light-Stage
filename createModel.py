@@ -33,6 +33,7 @@ def createAndSaveModel():
     chunk.buildDepthMaps(quality = PhotoScan.UltraQuality, filter = PhotoScan.AggressiveFiltering)
     chunk.buildDenseCloud()
     chunk.buildModel(surface = PhotoScan.Arbitrary, interpolation = PhotoScan.EnabledInterpolation, face_count = PhotoScan.FaceCount.MediumFaceCount, source = PhotoScan.DataSource.DenseCloudData)
+    chunk.smoothModel(4)
 
     chunk.exportCameras("{}bundler.out".format(path), PhotoScan.CamerasFormat.CamerasFormatBundler)
     chunk.exportCameras("{}agisoftXML.xml".format(path), PhotoScan.CamerasFormat.CamerasFormatXML)
