@@ -1,3 +1,4 @@
+import argparse
 import time
 import xml.etree.ElementTree as ET
 
@@ -357,8 +358,9 @@ def getCameraParameters(pathToBlockExchangeXML, pathToAgisoftXML):
 
     return cardParams
 
-def createMeshLabXML(name, objectName, type):
+def createMeshLabXML(name, objectName, ntype):
     E = lxml.builder.ElementMaker()
+    print(ntype)
 
     project = E.MeshLabProject(
         E.MeshGroup(
@@ -373,7 +375,7 @@ def createMeshLabXML(name, objectName, type):
             )
         ),
         E.RasterGroup(
-            *createVCGTags(type)
+            *createVCGTags(ntype)
         )
     )
 
@@ -409,6 +411,8 @@ def createVCGTags(ntype):
         focalLength = focalLengths[card]
         paramKeys = cameraParam.keys()
 
+        file_name = "{}Normal{}".format(ntype, number)
+
         tag = E.MLRaster(
              etree.Element('VCGCamera',
              RotationMatrix=rotationMatrix,
@@ -421,9 +425,9 @@ def createVCGTags(ntype):
              TranslationVector=translationVector),
 
              E.Plane(semantic="1",
-             fileName="{}Normal{}.png".format(ntype, number)),
+             fileName="{}.png".format(file_name)),
 
-             label="{}Normal{}".format(ntype, number)
+             label="{}".format(file_name)
         )
 
         rasterTags.append(tag)

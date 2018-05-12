@@ -27,11 +27,12 @@ def createAndSaveModel():
         if not camera.transform:
             doc.chunk.alignCameras([camera])
 
+
     chunk.optimizeCameras(adaptive_fitting=True)
 
     chunk.buildDepthMaps(quality = PhotoScan.UltraQuality, filter = PhotoScan.AggressiveFiltering)
     chunk.buildDenseCloud()
-    chunk.buildModel(surface = PhotoScan.Arbitrary, interpolation = PhotoScan.EnabledInterpolation, face_count = PhotoScan.FaceCount.HighFaceCount, source = PhotoScan.DataSource.DenseCloudData)
+    chunk.buildModel(surface = PhotoScan.Arbitrary, interpolation = PhotoScan.EnabledInterpolation, face_count = PhotoScan.FaceCount.MediumFaceCount, source = PhotoScan.DataSource.DenseCloudData)
 
     chunk.exportCameras("{}bundler.out".format(path), PhotoScan.CamerasFormat.CamerasFormatBundler)
     chunk.exportCameras("{}agisoftXML.xml".format(path), PhotoScan.CamerasFormat.CamerasFormatXML)
