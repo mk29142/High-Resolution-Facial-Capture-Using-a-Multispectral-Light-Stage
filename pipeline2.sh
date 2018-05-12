@@ -10,7 +10,7 @@ function createModel {
     eval "./PhotoScanPro -r $path"
 }
 
-function diffuse {
+function texture {
     path="`pwd`"
     # pathToMeshlab  = "~/../../Applications/meshlab.app/Contents/MacOS/"
     pathToMeshlab="~/Documents/newNewMeshlab/cnr-isti-vclab/meshlab/src/distrib/meshlab.app/Contents/MacOS/"
@@ -21,14 +21,20 @@ function diffuse {
     # diffuse project
     eval "python photometricNormals.py --diffuseProj"
     eval "cd $pathToMeshlab"
-    eval "./meshlabserver -p $path/diffuseProject.mlp -o $path/diffuseAdded.ply -m vn -s $path/diffuseScript.mlx"
+    eval "./meshlabserver -p $path/diffuseProject.mlp -o $path/diffuseAdded.ply -m vn -s $path/blenderScript.mlx"
     eval "cd $path"
 
     # nehab
     eval "wine mesh_opt.exe diffuseAdded.ply -lambda 0.01 -fixnorm 1:4  diffuseEmbossed.obj"
+
+    eval "python photometricNormals.py --specularProj"
+    eval "cd $pathToMeshlab"
+    eval "./meshlabserver -p $path/specularProject.mlp -o $path/forBlender.obj -m vn -s $path/blenderScript.mlx"
+    eval "cd $path"
 }
 
 function blender {
+    # make sure you have created displacement map using shadermap 4 and named it the same texture map from the diffuse stage. 
     path="`pwd`"
     pathToBlender  = "~/../../Applications/blender.app/Contents/MacOS/"
 
@@ -47,7 +53,7 @@ case "$os" in
 
     if [[ $1 == "-d" ]]
     then
-      diffuse
+      texture
     fi
 
     if [[$1 == "-b"]]
