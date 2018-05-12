@@ -32,10 +32,16 @@
   <Param type="RichBool" description="UV stretching" value="false" name="stretchingAllowed" tooltip="If true, texture coordinates are stretched so as to cover the full interval [0,1] for both directions"/>
   <Param type="RichInt" description="Texture gutter" value="4" name="textureGutter" tooltip="Extra boundary to add to each patch before packing in texture space (in pixels)"/>
  </filter>
- <filter name="Transfer: Texture to Vertex Color (1 or 2 meshes)">
-  <Param type="RichMesh" description="Source Mesh" value="0" name="sourceMesh" tooltip="The mesh with associated texture that we want to sample from"/>
-  <Param type="RichMesh" description="Target Mesh" value="0" name="targetMesh" tooltip="The mesh whose vertex color will be filled according to source mesh texture"/>
-  <Param type="RichAbsPerc" description="Max Dist Search" value="0.0136626" name="upperBound" min="0" max="0.683132" tooltip="Sample points for which we do not find anything whithin this distance are rejected and not considered for recovering color"/>
+<FilterScript>
+ <filter name="Project active rasters color to current mesh">
+  <Param value="0.5" description="depth threshold" name="deptheta" tooltip="threshold value for depth buffer projection (shadow buffer)" type="RichFloat"/>
+  <Param value="false" description="Only on selecton" name="onselection" tooltip="If true, projection is only done for selected vertices" type="RichBool"/>
+  <Param value="true" description="use angle weight" name="useangle" tooltip="If true, color contribution is weighted by pixel view angle" type="RichBool"/>
+  <Param value="true" description="use distance weight" name="usedistance" tooltip="If true, color contribution is weighted by pixel view distance" type="RichBool"/>
+  <Param value="true" description="use image borders weight" name="useborders" tooltip="If true, color contribution is weighted by pixel distance from image boundaries" type="RichBool"/>
+  <Param value="true" description="use depth discontinuities weight" name="usesilhouettes" tooltip="If true, color contribution is weighted by pixel distance from depth discontinuities (external and internal silhouettes)" type="RichBool"/>
+  <Param value="false" description="use image alpha weight" name="usealpha" tooltip="If true, alpha channel of the image is used as additional weight. In this way it is possible to mask-out parts of the images that should not be projected on the mesh. Please note this is not a transparency effect, but just influences the weigthing between different images" type="RichBool"/>
+  <Param g="0" description="Color for unprojected areas" name="blankColor" tooltip="Areas that cannot be projected willb e filled using this color. If R=0 G=0 B=0 A=0 old color is preserved" r="0" a="255" b="0" type="RichColor"/>
  </filter>
  <filter name="Per Vertex Normal Function">
   <Param type="RichString" description="func nx = " value="((r/255)*2)-1" name="x" tooltip="insert function to generate new x for the normal"/>

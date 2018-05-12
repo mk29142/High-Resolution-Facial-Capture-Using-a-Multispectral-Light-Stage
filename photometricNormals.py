@@ -1,3 +1,4 @@
+import argparse
 import time
 import xml.etree.ElementTree as ET
 
@@ -357,7 +358,7 @@ def getCameraParameters(pathToBlockExchangeXML, pathToAgisoftXML):
 
     return cardParams
 
-def createMeshLabXML(name, objectName, type):
+def createMeshLabXML(name, objectName, ntype):
     E = lxml.builder.ElementMaker()
 
     project = E.MeshLabProject(
@@ -373,7 +374,7 @@ def createMeshLabXML(name, objectName, type):
             )
         ),
         E.RasterGroup(
-            *createVCGTags(type)
+            *createVCGTags(ntype)
         )
     )
 
