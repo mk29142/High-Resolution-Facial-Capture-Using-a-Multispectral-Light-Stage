@@ -56,7 +56,7 @@ case "$os" in
       texture
     fi
 
-    if [[$1 == "-b"]]
+    if [[ $1 == "-b" ]]
     then
         blender
     fi
