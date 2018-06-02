@@ -31,10 +31,11 @@ function texture {
     eval "cd $pathToMeshlab"
     eval "./meshlabserver -p $path/specularProject.mlp -o $path/forBlender.obj -m vn -s $path/blenderScript.mlx"
     eval "cd $path"
+    eval "python blur.py"
 }
 
 function blender {
-    # make sure you have created displacement map using shadermap 4 and named it the same texture map from the diffuse stage. 
+    # make sure you have created displacement map using shadermap 4 and named it the same texture map from the texture stage.
     path="`pwd`"
     pathToBlender  = "~/../../Applications/blender.app/Contents/MacOS/"
 

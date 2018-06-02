@@ -4,5 +4,6 @@
 !photometricNormals.py
 !createModel.py
 !blender.py
+!blur.py
 !*.mlx
 !*.sh
