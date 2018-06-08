@@ -22,7 +22,7 @@ def displaceGeomtry(pathToOBJ, pathForExport):
     dispMod = obj_object.modifiers.new("Displace", type='DISPLACE')
     dispMod.texture = tex
     dispMod.texture_coords = "UV"
-    dispMod.strength = 0.002
+    dispMod.strength = -0.002
     bpy.ops.object.modifier_apply(modifier=dispMod.name)
 
     bpy.ops.export_scene.obj(filepath=pathForExport)
